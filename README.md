@@ -25,7 +25,6 @@ n0l Infra repository
 
 6. Для корректной работы:  Справа сверху Settings -> вписать в поле Lets Encrypt Domain - **35.209.112.226.xip.io**
 
-Данные для проверки:
 bastion_IP = 35.209.112.226
 someinternalhost_IP = 10.128.15.232
 
