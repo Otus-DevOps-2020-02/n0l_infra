@@ -4,14 +4,11 @@ n0l Infra repository
 #### ex.06
 
 1. Создание инстанса через gcloud и настрока правил firewall
-
 2. Созданы скрипты для настройки системы и деплоя приложения
-
 3. Все скрипты обьединены в один startup script, который можно указать при создании инстанса
 
-4. testapp_IP = 34.70.106.97
-
-   testapp_port = 9292
+testapp_IP = 34.70.106.97
+testapp_port = 9292
 
 #### ex.05
 
@@ -31,8 +28,8 @@ n0l Infra repository
 
 6. Для корректной работы:  Справа сверху Settings -> вписать в поле Lets Encrypt Domain - **35.209.112.226.xip.io**
 
-7. bastion_IP = 35.209.112.226
-   someinternalhost_IP = 10.128.15.232
+bastion_IP = 35.209.112.226
+someinternalhost_IP = 10.128.15.232
 
 #### ex.04
 
