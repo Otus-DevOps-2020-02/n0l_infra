@@ -1,3 +1,96 @@
+# Google Cloud Platform
+
+Облачная платформа от google
+
+Для теста потребуется учетка и пластиковая карта (виртуальные вроде не подходят)
+Также у меня не сработало с только что созданными учетками.
+
+https://console.cloud.google.com/
+
+#### Установака gcloud
+
+https://cloud.google.com/sdk/docs/
+
+Я установил в каталог **/opt/google-cloud-sdk/** якобы тут должны лежать программы пользователя установленные не из репозитрия
+
+Также нужно обновить пути:
+
+```
+ # The next line updates PATH for the Google Cloud SDK.
+ source '[path-to-my-home]/google-cloud-sdk/path.bash.inc'
+ # The next line enables bash completion for gcloud.
+ source '[path-to-my-home]/google-cloud-sdk/completion.bash.inc'
+```
+
+#### Команды
+
+```bash
+gcloud auth list
+gcloud info
+gcloud inint
+# создать витруальную машину
+gcloud compute instances create instance-from-gcloud-cli \
+  --boot-disk-size=10GB \
+  --image=ubuntu-1604-xenial-v20170815a \
+  --image-project=ubuntu-os-cloud \
+  --machine-type=f1-micro \
+  --labels=role=willberemovedin24h \
+  --preemptible \
+  --restart-on-failure \
+  --zone=europe-west1-d
+# появится два предупреждения, одно про меделенную работу дисков размером меньше 200 ГБ, второе про то что старые образ будет заменен на более свежий
+
+#Можно вместо --image указывать --image-family, что дает большую свободу (не нужно искать какой образ последний)
+  --image-family ubuntu-1604-lts \
+# пример списка хостов
+gcloud compute instances list
+# чтобы указать startup script нужно добавить опцию
+  --metadata-from-file startup-script=path/to/file
+# так можно загрузить startup script из интернета
+  --metadata startup-script-url=gs://bucket/startupscript.sh
+# удалить инстанс
+gcloud compute instances delete INSTANCE_NAMES
+# рыба
+gcloud compute instances create reddit-app\
+  --boot-disk-size=10GB \
+  --image-family ubuntu-1604-lts \
+  --image-project=ubuntu-os-cloud \
+  --machine-type=f1-micro \
+  --zone=us-central1-f \
+  --tags=puma-server,http-server \
+  --restart-on-failure \
+  --boot-disk-type=pd-standard \
+  --metadata-from-file startup-script=path/to/file
+```
+
+#### Bucket
+
+Хранилище до 5ТБ, которое доступно из любого проекта. Подходит для организации данных
+
+```bash
+# Создаем бакет(емкость для данных), имя должно быть уникальным!!!
+gsutil mb gs://otus-test
+
+# Смотрим что есть
+gsutil ls               
+
+# Копируем файл в Storage
+gsutil cp Storage-test.txt gs://otus-test/
+
+# Смотрим содержимое
+gsutil cat gs://otus-test/Storage-test.txt
+
+# Копируем к себе файл
+gsutil cp gs://otus-test/Storage-test.txt local.Storage-test.txt
+```
+
+#### Firewall
+
+```bash
+# создать правило ис комадоной строки
+gcloud compute firewall-rules create default-puma-server1  --allow=tcp:9292   --source-ranges=0.0.0.0/0   --target-tags=puma-server
+```
+
 # SSH
 
 Сгенегрировать ключ для пользователя appuser с пустым паролем
