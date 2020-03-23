@@ -1,11 +1,14 @@
 # n0l_infra
 n0l Infra repository
 
-#### ex.04
+#### ex.06
 
-1.  Настройка git hooks вариант pre-commit через https://pre-commit.com/
-2. Интеграций github и slack (получение уведомлений в slack)
-3. Интеграция travis ci и slack для получения результата проверки
+1. Создание инстанса через gcloud и настрока правил firewall
+2. Созданы скрипты для настройки системы и деплоя приложения
+3. Все скрипты обьединены в один startup script, который можно указать при создании инстанса
+
+testapp_IP = 34.70.106.97
+testapp_port = 9292
 
 #### ex.05
 
@@ -27,4 +30,10 @@ n0l Infra repository
 
 bastion_IP = 35.209.112.226
 someinternalhost_IP = 10.128.15.232
+
+#### ex.04
+
+1.  Настройка git hooks вариант pre-commit через https://pre-commit.com/
+2. Интеграций github и slack (получение уведомлений в slack)
+3. Интеграция travis ci и slack для получения результата проверки
 
