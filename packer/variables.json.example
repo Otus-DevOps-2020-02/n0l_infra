@@ -1,0 +1,7 @@
+{
+  "project_id": "infra-000001",
+  "machine_type": "f1-micro",
+  "source_image_family": "ubuntu-1604-lts",
+  "ssh_username": "appuser",
+  "zone": "us-central1-f"
+}
