@@ -1,3 +1,120 @@
+# Packer
+
+Packer — это инструмент для создания одинаковых образов ОС для различных платформ из одного описания.
+
+Достаточно давно [Патрик Дебоиз](http://www.jedi.be/blog/) (это человек, который придумал термин DevOps) написал [Veewee](https://github.com/jedi4ever/veewee) — инструмент, который позволяет автоматически создавать образа для VirtualBox, KVM и VMWare.
+
+Packer пошел дальше, и позволяет делать то же самое для распространенных облачных провайдеров: [Amazon](http://www.packer.io/docs/builders/amazon.html),[DigitalOcean](http://www.packer.io/docs/builders/digitalocean.html), [OpenStack](http://www.packer.io/docs/builders/openstack.html) и [GCE](http://www.packer.io/docs/builders/googlecompute.html). Также Packer позволяет создавать контейнеры для [Docker](https://www.docker.io/).
+
+Взято отсюда: https://habr.com/ru/company/express42/blog/212085/
+
+#### Установка и натройка
+
+Инструкция поустановке https://packer.io/downloads.html
+
+Распакуйте скачанный zip архив и поместите бинарный файл в директорию, путь до которой содержится в переменной окружения PATH.
+
+```bash
+$ packer -v
+```
+
+Для управления ресурсами GCP через сторонние приложения, такие как Packer и Terraform, нам нужно предоставить этим инструментам информацию (credentials) для аутентификации и управления ресурсами GCP нашего акаунта.
+
+Application Default Credentials (ADC)
+
+Установка ADC позволяет приложениям, работающим с GCP ресурсами и использующим Google API библиотеки, управлять ресурсами GCP через авторизованные API вызовы, используя credentials вашего пользователя.
+
+Создайте АDC:
+
+```bash
+$ gcloud auth application-default login
+```
+
+#### Пример шаблона
+
+Шаблоны хранятся в формате .json.
+
+Если **builders** секция отвечает за создание виртуальной машины для билда и создание машинного образа в GCP, то секция **provisioners** позволяет устанавливать нужное ПО, производить настройки системы и конфигурацию приложений на созданной VM.
+
+Вот примера шаблона:
+
+```json
+{
+    "builders": [
+        {
+            "type": "googlecompute",
+            "project_id": "infra-189607",
+            "image_name": "reddit-base-{{timestamp}}",
+            "image_family": "reddit-base",
+            "source_image_family": "ubuntu-1604-lts",
+            "zone": "us-central1-f",
+            "ssh_username": "appuser",
+            "machine_type": "f1-micro"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "script": "scripts/install_ruby.sh",
+            "execute_command": "sudo {{.Path}}"
+        },
+        {
+            "type": "shell",
+            "script": "scripts/install_mongodb.sh",
+            "execute_command": "sudo {{.Path}}"
+        }
+    ]
+}
+```
+
+- type: "googlecompute" - что будет создавать виртуальную машину для билда образа (в нашем случае Google Compute Engine)
+
+- project_id: "infra-00001" - id вашего проекта
+
+- image_family: "reddit-base" - семейство образов к которому будет принадлежать новый образ
+
+- image_name: "reddit-base-{{timestamp}}" - имя создаваемого образа
+- source_image_family: "ubuntu-1604-lts" - что взять за базовый образ для нашего билда
+
+- zone: "europe-west1-b" - зона, в которой запускать VM для билда образа
+- ssh_username: "appuser" - временный пользователь, который будет создан для подключения к VM во время билда и выполнения команд провижинера (о нем поговорим ниже)
+- machine_type: "f1-micro" - тип инстанса, который запускается для билда
+- Используем [shell provisioner](https://packer.io/docs/provisioners/shell.html), который позволяет запускать bash команды на запущенном инстансе.
+- Опция execute_command позволяет указать, каким способом будет запускаться скрипт. Т.к. команды по установке требуют sudo, то мы указываем, что запускать скрипт следует с sudo
+
+```bash
+# проверить на наличие ошибок
+$ packer validate  -var-file variables.json ./ubuntu16.json
+# запустить сборку образа
+$ packer build -var-file variables.json ubuntu16.json
+```
+
+#### Параметризация параметров
+
+Файл **variables.json** нужно добавлять в gitignore а для примера создавать файл **variables.json.example** c вымышленными заначениями
+
+Значения параметров хранятся в файле **variables.json**
+
+```json
+{
+  "project_id": "infra-00001",
+  "source_image_family": "ubuntu-1604-lts",
+  "machine_type": "f1-micro"
+}
+```
+
+А сами значения параметров в файле меняются на 
+
+```json
+{
+"project_id": "{{user `project_id`}}",
+"source_image_family": "{{user `source_image_family`}}",
+"machine_type": "{{user `machine_type`}}"
+}
+```
+
+Готовый образ можно использовать для быстрого развертывания VM
+
 # Google Cloud Platform
 
 Облачная платформа от google
@@ -15,11 +132,11 @@ https://cloud.google.com/sdk/docs/
 
 Также нужно обновить пути:
 
-```
- # The next line updates PATH for the Google Cloud SDK.
- source '[path-to-my-home]/google-cloud-sdk/path.bash.inc'
- # The next line enables bash completion for gcloud.
- source '[path-to-my-home]/google-cloud-sdk/completion.bash.inc'
+```bash
+# The next line updates PATH for the Google Cloud SDK.
+$ source '[path-to-my-home]/google-cloud-sdk/path.bash.inc'
+# The next line enables bash completion for gcloud.
+$ source '[path-to-my-home]/google-cloud-sdk/completion.bash.inc'
 ```
 
 #### Команды
