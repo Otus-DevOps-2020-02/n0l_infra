@@ -1,7 +1,28 @@
 # n0l_infra
 n0l Infra repository
 
-#### ex.07
+#### ex.08
+
+1. Знакомство с  terraform (отсновные команды и понятия). Создание инстанса
+
+2. Входные и выходные переменные и параметризация
+
+3. Provisioners
+
+4. Добавил несколько ssh ключей в коде terraform
+   Для добавления нескольких ssh ключей в метаданные всего проекта, их нужно записывать в одну строку без пробелов. (пример ниже). Если через web поменять конфигурацию, затем выполнить terraform apply, то он затрет измения выполненные через web
+
+   ```yaml
+   resource "google_compute_project_metadata" "default" {
+     metadata = {
+       ssh-keys = "appuser:${file(var.public_key_path)}appuser1:${file("/Users/xxx/.ssh/appuser1.pub")}appuser2:${file("/Users/xxx/.ssh/appuser2.pub")}"
+     }
+   }
+   ```
+
+5. Описание через terraform инфраструктуры балансировщика в GCP
+
+ex.07
 
 1. Создание образа c уствновленными пакетами с  помощью packer **ubuntu16.json** (остается только задеплоить приложение)
 2.  Настрока файла параметризации **variables.json**

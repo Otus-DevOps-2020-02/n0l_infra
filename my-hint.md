@@ -1,3 +1,223 @@
+# Terraform
+
+[Terraform](https://www.terraform.io/) – это инструмент от компании Hashicorp, помогающий декларативно управлять инфраструктрой. В данном случае не приходится вручную создавать инстансы, сети и т.д. в консоли вашего облачного провайдера; достаточно написать конфигурацию, в которой будет изложено, как вы видите вашу будущую инфраструктуру. 
+
+Взято отсюда: https://habr.com/ru/company/piter/blog/351878/
+
+#### Установка и настройка
+
+Устанавливается отсюда https://www.terraform.io/downloads.html
+
+положил сюда **/usr/local/bin/terraform**
+
+Для корректной работы с ДЗ рекомендуется указывать версию терраформа ~> 0.12.0 и провайдера google ~> 2.5.0 (~ в конфиге, значит не обращать внимания на минорные релизы, сборка перестает запускаться если отличается мажорная версия релиза)
+
+Провайдеры Terraform являются загружаемыми модулями, начиная с версии 0.10. Для того чтобы загрузить провайдер и начать его использовать выполните следующую команду в директории terraform:
+
+```bash
+$ terraform init
+```
+
+#### Конфигурация
+
+- terraform загружает все файлы в текущей директории, имеющие расширение .tf
+  main.tf - главный конфигурационный файл
+
+```yaml
+terraform {
+  # Версия terraform
+  required_version = "~>0.12.19"
+}
+provider "google" {
+  # Версия провайдера
+  version = "~>2.5.0"
+  # ID проекта
+  project = var.project
+  region  = var.region
+}
+
+resource "google_compute_instance" "app" {
+  name         = "reddit-app"
+  machine_type = "f1-micro"
+  zone         = var.zone
+  tags         = ["reddit-app"]
+  # Определим параметры подключения провиженеров к VM.
+  # Внутрь ресурса VM, перед определением провижинеров.
+  # В данном примере мы указываем, что провижинеры,
+  # определенные в ресурсе VM, должны подключаться к созданной
+  # VM по SSH, используя для подключения приватный ключ
+  # пользователя appuser
+  connection {
+    type  = "ssh"
+    host  = self.network_interface[0].access_config[0].nat_ip
+    user  = "appuser"
+    agent = false
+    # путь до приватного ключа
+    private_key = file(var.private_key_path)
+  }
+  # В данном случае мы говорим, провижинеру скопировать локальный файл,
+  # располагающийся по указанному относительному пути (files/puma.service),
+  # в указанное место на удаленном хосте
+  provisioner "file" {
+    source      = "./files/puma.service"
+    destination = "/tmp/puma.service"
+  }
+  # В определении данного провижинера мы указываем
+  # относительный путь до скрипта, который следует запустить на созданной VM.
+  provisioner "remote-exec" {
+    script = "files/deploy.sh"
+  }
+  # В определении загрузочного диска для VM, мы
+  # передаем имя семейства образа. На данном этапе используется
+  # base-образ, так как дальнейшее развертывание приложения в этом
+  # задании будет производиться при помощи терраформа. Также
+  # можно передать полное имя образа, например "reddit-base-1514137169
+  boot_disk {
+    initialize_params {
+      image = var.disk_image
+    }
+  }
+  metadata = {
+    # путь до публичного ключа
+    ssh-keys = "appuser:${file(var.public_key_path)}"
+  }
+  network_interface {
+    network = "default"
+    access_config {}
+  }
+}
+
+resource "google_compute_firewall" "firewall_puma" {
+  name = "allow-puma-default"
+  # Название сети, в которой действует правило
+  network = "default"
+  # Какой доступ разрешить
+  allow {
+    protocol = "tcp"
+    ports    = ["9292"]
+  }
+  # Каким адресам разрешаем доступ
+  source_ranges = ["0.0.0.0/0"]
+  # Правило применимо для инстансов с перечисленными тэгами
+  target_tags = ["reddit-app"]
+}
+
+resource "google_compute_project_metadata" "default" {
+  metadata = {
+    ssh-keys = "appuser:${file(var.public_key_path)}"
+  }
+}
+```
+
+- Для добавления нескольких ssh ключей в метаданные всего проекта, их нужно записывать в одну строку без пробелов. (пример ниже)
+- Если через web поменять конфигурацию, затем выполнить terraform apply, то он затрет измения выполненные через web
+
+```yaml
+resource "google_compute_project_metadata" "default" {
+  metadata = {
+    ssh-keys = "appuser:${file(var.public_key_path)}appuser1:${file("/Users/xxx/.ssh/appuser1.pub")}appuser2:${file("/Users/xxx/.ssh/appuser2.pub")}"
+  }
+}
+```
+
+- Вынесем интересующую нас информацию - внешний адрес VM - в выходную переменную (output variable)
+  outputs.tf - отдельный файл для хранения выходных переменных
+
+```yaml
+output "app_external_ip" {
+  value = google_compute_instance.app.network_interface[0].access_config[0].nat_ip
+}
+
+output "lb_external_ip" {
+  value = google_compute_global_forwarding_rule.default.ip_address
+}
+```
+
+- Входные переменные позволяют нам параметризировать конфигурационные файлы.
+  Для того чтобы использовать входную переменную ее нужно сначала определить в одном из конфигурационных файлов. Создадим для этих целей еще один конфигурационный файл variables.tf в директории terraform
+
+```yaml
+variable project {
+  description = "Project ID"
+}
+variable region {
+  description = "Region"
+  # Значение по умолчанию
+  default = "us-central1"
+}
+variable public_key_path {
+  # Описание переменной
+  description = "Path to the public key used for ssh access"
+}
+variable disk_image {
+  description = "Disk image"
+}
+variable private_key_path {
+  description = "Path to the private key used for ssh access"
+}
+variable zone {
+  description = "Zone"
+  # Значение по умолчанию
+  default = "us-central1-f"
+}
+```
+
+- Определим переменные используя специальный файл terraform.tfvars
+
+```yaml
+project          = "infra-00001"
+public_key_path  = "/Users/appuser/.ssh/appuser.pub"
+disk_image       = "reddit-base"
+private_key_path = "/Users/appuser/.ssh/appuser"
+```
+
+
+
+#### Команды
+
+```
+$ terraform plan
+```
+
+Покажет какие изменения будут применены. Знак "+" перед наименованием ресурса означает, что ресурс будет добавлен. Далее приведены атрибуты этого ресурса. “<computed>” означает, что данные атрибуты еще не известны terraform'у и их значения будут получены во время создания ресурса.
+
+```
+$ terraform apply
+```
+
+Применяет текущую конфигурацию. Начиная с версии 0.11 terraform apply запрашивает дополнительное подтверждение при выполнении. Необходимо добавить -auto-approve для отключения этого. Результатом выполнения команды также будет создание файла **terraform.tfstate** в директории terraform. Terraform хранит в этом файле состояние управляемых им ресурсов. Загляните в этот файл и найдите внешний IP адрес созданного инстанса.
+
+```
+$ terraform show | grep nat_ip
+```
+
+Показвает текущее состояние системы и позволет поискать
+
+```
+$ terraform refresh - позволяет обновить значения переменных
+$ terraform output  - посмотреть значения переменных
+$ terraform taint google_compute_instance.app  - пересоздать ресурс VM при следующем
+применении изменений
+$ terraform fmt - отформатировать все файлы (привести к красивому виду)
+```
+
+Перед тем как дать команду terraform'у применить изменения, хорошей практикой является предварительно посмотреть, какие изменения terraform собирается произвести относительно состояния известных ему ресурсов (tfstate файл), и проверить, что мы действительно хотим сделать именно эти изменения.
+
+#### Provisioners
+
+В terraform вызываются в момент создания/удаления ресурса и позволяют выполнять команды на удаленной или локальной машине. Их используют для запуска инструментов управления конфигурацией или начальной настройки системы. Используем провижинеры для деплоя последней версии приложения на созданную VM.
+
+Внутрь ресурса, содержащего описание VM, вставьте секцию провижинера типа file, который позволяет копировать содержимое файла на удаленную машину. В нашем случае мы говорим, провижинеру скопировать локальный файл, располагающийся по указанному относительному пути (files/puma.service), в указанное место на удаленном хосте
+
+```yaml
+provisioner "file" {
+  source = "files/puma.service"
+  destination = "/tmp/puma.service"
+}
+```
+
+Провижинеры выполняются по порядку их определения
+
 # Packer
 
 Packer — это инструмент для создания одинаковых образов ОС для различных платформ из одного описания.
@@ -207,6 +427,14 @@ gsutil cp gs://otus-test/Storage-test.txt local.Storage-test.txt
 # создать правило ис комадоной строки
 gcloud compute firewall-rules create default-puma-server1  --allow=tcp:9292   --source-ranges=0.0.0.0/0   --target-tags=puma-server
 ```
+
+#### Сервисный аккаунт
+
+https://cloud.google.com/iam/docs/creating-managing-service-accounts - как создавать сервисный аккаунт (может потребоваться например для  terraform)
+
+https://cloud.google.com/iam/docs/creating-managing-service-account-keys - как сгенерировать ключи для сервисного аккаунта
+
+
 
 # SSH
 
