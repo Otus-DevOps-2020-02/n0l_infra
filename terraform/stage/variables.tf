@@ -16,12 +16,12 @@ variable disk_image {
 
 variable app_disk_image {
   description = "Disk image for reddit app"
-  default     = "reddit-app-1579432023"
+  default     = "reddit-app-1587106541"
 }
 
 variable db_disk_image {
   description = "Disk image for reddit db"
-  default     = "reddit-db-1579431547"
+  default     = "reddit-db-1587106889"
 }
 
 variable private_key_path {
