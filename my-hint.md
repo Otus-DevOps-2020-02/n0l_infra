@@ -171,7 +171,8 @@ disk_image       = "reddit-base"
 private_key_path = "/Users/appuser/.ssh/appuser"
 ```
 
-
+- Хранение стейта. Для работы в команде удобно хранить стейт например в бакете
+  
 
 #### Команды
 
@@ -217,6 +218,79 @@ provisioner "file" {
 ```
 
 Провижинеры выполняются по порядку их определения
+
+#### Импортируем существующую инфраструктуру в Terraform
+
+По умолчанию в новом проекте создается правило файервола, открывающее SSH доступ ко всем инстансам, запущенным в сети default (которая тоже создается по умолчанию в новом проекте).
+
+Для корректного управления нужно:
+
+1. Создать такое же правило в проекте (в нашем случае main.tf)
+
+   ```yaml
+   resource "google_compute_firewall" "firewall_ssh" {
+     name = "default-allow-ssh"
+     network = "default"
+   
+     allow {
+       protocol = "tcp"
+       ports = ["22"]
+     }
+   
+     source_ranges = ["0.0.0.0/0"]
+   }
+   
+   ```
+
+2. Terraform ничего не знает о существующем правиле файервола (а всю информацию, об известных ему ресурсах, он хранит в state файле), то при выполнении команды apply terraform пытается создать новое правило файервола. Для того чтобы сказать terraform-у не создавать новое правило, а управлять уже имеющимся, в его "записную книжку" (state файл) о всех ресурсах, которыми он управляет, нужно занести информацию о существующем правиле.
+
+   Команда позволяет добавить информацию о созданном без помощи Terraform ресурсе в state файл. В директории terraform выполните команду: import
+
+   ```bash
+   $ terraform import google_compute_firewall.firewall_ssh default-allow-ssh
+   google_compute_firewall.firewall_ssh: Importing from ID "default-allow-ssh"...
+   google_compute_firewall.firewall_ssh: Import complete!
+   Imported google_compute_firewall (ID: default-allow-ssh)
+   google_compute_firewall.firewall_ssh: Refreshing state... (ID: default-allow-ssh)
+   Import successful!
+   ```
+
+#### Зависимости
+
+- Неявная зависимостьСсылку в одном ресурсе на атрибуты другого тераформ понимает как зависимость одного ресурса от другого. Это влияет на очередность создания и удаления ресурсов при применении изменений.
+- Можно явно указать зависимости через аргумент depends_on
+  https://www.terraform.io/docs/configuration/resources.html#depends_on-explicit-resource-dependencies
+
+#### Модули
+
+Позволяют разбить конфигурационный файл инфраструктура на составляющие. Их легче конфигурировать проще отлаживать и можно переиспользовать.
+
+Чтобы начать использовать модули, нам нужно сначала их загрузить из указанного источника
+
+```bash
+$ terraform get
+```
+
+В сентябре 2017 компания HashiCorp запустила [публичный реестр модулей для terraform](https://registry.terraform.io/). До этого модули можно было либо хранить либо локально, как мы делаем в этом ДЗ, либо забирать из Git, Mercurial или HTTP. На главной странице можно искать необходимые модули по названию и фильтровать по провайдеру. Например, [ссылка](https://registry.terraform.io/browse/modules?provider=google) модулей для провайдера google. Модули бывают Verified и обычные. Verified это модули от HashiCorp и ее партнеров
+
+Правильно все переенные передавать в модуль вместе с вызовом этого модуля, поэтому в модуле обычно нету файла ***.tfvars**
+
+#### Шаблоны
+
+Пример применения: положить на удаленную машину конфиг и заполнить в нем зачения переменных. Предпочтительный вариант использовать 
+
+```yaml
+content = templatefile("путь до файла/hosts.tpl", {
+  names = local.names,
+  addrs = local.ips,
+  user = var.user
+})
+* - Путь до файла можно задать через переменную
+```
+
+https://alexharv074.github.io/2019/11/23/adventures-in-the-terraform-dsl-part-x-templates.html#template-providers--21
+
+
 
 # Packer
 
