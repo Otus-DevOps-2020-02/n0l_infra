@@ -1,7 +1,7 @@
 ---
 - name: Configure MongoDB for reddit-app
   hosts: db
-  tags: db-tag 
+  tags: db-tag
   become: true
   vars:
     mongo_bind_ip: 0.0.0.0 # <-- Переменная задается в блоке vars

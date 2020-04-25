@@ -9,7 +9,7 @@ for ip in request.split('\n')[1:-1]:
          ip_dict["app"]["hosts"]=[str(ip.split(' ')[2])]
     else:
          ip_dict["db"]["hosts"]=[str(ip.split(' ')[2])]
-         ip_dict["app"]["vars"]={"db_ip":str(ip.split(' ')[1])}
+         ip_dict["app"]["vars"]={"db_host":str(ip.split(' ')[1])}
 
 data = ip_dict
 

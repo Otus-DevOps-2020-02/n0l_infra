@@ -8,3 +8,23 @@ notifications:
   slack:
     rooms:
       secure: mZJ7B3vggzGATsvQxgKwvyG1XR4uvS79afuX2IFLkXA2UIz8yDqMEL93iN4GW95X7U28ZarP3e6Hfr8PquiF3AxhTiP3webLyBtzrGT6/SOJQvl40vCgyY01BXHbMVlhY4JCZtsCftP2v3+obytUAyVBa3/Z7NCoGSsgAWlESHvveQFS/Bcvkng64OoZ+j/PMDLLr3NrysuEvz8O+DgjD/h4zpKMAUwhHz+TaWCqz7eFMhHobo/0agEb2LD7i+8nBhvU/hrT5BZk6yvwmgKuNhuP4vKWu1ZLgiY3Sy1WtFRBnokmRYu2R6puuXRN1N9nFHpb2+UoGa/4WQD/aiSkI1umHFaJ6z7MJzfMUT3gsWNe7rThFfGAzJ17piOM9T/dc30eo1zdh4+ylL7roPzPi99RBQotPg8Sil6SFyxCZYjDxZQ+myd0pdUlHjK91+lkmuQlmTEU2KqNDwp98kto6nBcPv+b+esavbF+LDkCN2w/q823JydQGqmZZ1O1H+SJ82r0v00inPvBBA1k5bVoFyktExNJipHUMCdx/LY1jXtwfGlkwI6tln05Wzt7KK6J7fWYn4p4rSt9Mb9O9G8UA7ITJu2L8mh71zj+kbHYVB80ypHv9vRkqTv3Mo9ssdbWES3e+QbqsPXQEaU6QiKIkouYwXWTa2BZPFaI2ZJIph8=
+
+script:
+- bash travis/travis_install_pkg.sh
+- packer validate -var-file=packer/variables.json.example packer/app.json
+- packer validate -var-file=packer/variables.json.example packer/db.json
+
+- cd terraform/stage
+- terraform get
+- terraform init
+- terraform validate
+- cd ../prod
+- terraform get
+- terraform init
+- terraform validate
+- cd ../../
+- tflint terraform/stage
+- tflint terraform/prod
+
+- ansible-lint ansible/playbooks/*.yml --exclude=roles/jdauphant.nginx
+
