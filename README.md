@@ -1,6 +1,20 @@
 # n0l_infra
 n0l Infra repository
 
+[![Build Status](https://travis-ci.com/Otus-DevOps-2020-02/n0l_infra.svg?branch=master)](https://travis-ci.com/Otus-DevOps-2020-02/n0l_infra)
+
+
+
+#### ex.13
+
+1. vagrant создание локального окружения
+2. провижиненинг в vagrant с помощью ansible
+3. разделил задачи в ролях по отдельным файлам
+4. Для локального тестирования Ansible ролей будем использовать Molecule для создания машин и проверки конфигурации и Testinfra для написания тестов.
+5. virtualenv и virtualenvwrapper
+6. вынес роль db в отдельный репозиторий https://github.com/n0l/Ex.13_ansible_role
+7. настроил оповещение о билде в slack
+
 #### ex.12
 
 1. создал роли для app и db
