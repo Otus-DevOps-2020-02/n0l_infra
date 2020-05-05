@@ -9,3 +9,12 @@ terraform/terraform
 *.retry
 jdauphant.nginx
 vault.key
+# Vagrant & molecule
+.vagrant/
+*.log
+*.pyc
+.molecule
+.cache
+.pytest_cache
+venv
+db-test

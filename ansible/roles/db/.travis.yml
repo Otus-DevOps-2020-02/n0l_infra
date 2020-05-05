@@ -1,29 +1,25 @@
----
 language: python
-python: "2.7"
-
-# Use the new container infrastructure
-sudo: false
-
-# Install ansible
-addons:
-  apt:
-    packages:
-    - python-pip
-
+python:
+- '3.6'
 install:
-  # Install ansible
-  - pip install ansible
-
-  # Check ansible version
-  - ansible --version
-
-  # Create ansible.cfg with correct roles_path
-  - printf '[defaults]\nroles_path=../' >ansible.cfg
-
+- pip install ansible==2.9.4 molecule apache-libcloud
 script:
-  # Basic role syntax check
-  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
-
-notifications:
-  webhooks: https://galaxy.ansible.com/api/v1/notifications/
+- molecule --debug create
+- molecule list
+- molecule converge
+- molecule verify
+after_script:
+- molecule --debug destroy
+env:
+  matrix:
+  - GCE_CREDENTIALS_FILE="$(pwd)/credentials.json"
+  global:
+  - secure: M39cQMZhBuMsks3pIXBTngvASLpdQ5xYNiAa+6RSf7u6hS5iQdtsh4uE/jutSxQi5SMfy2o+QFertNREwx0wdgf23mSrUg22yRMSqiOpD1vYuDCy+OSSxFBqCG09r6h0ZSyZNMtsWP79P0tUIN2FCS/AiJt0kIGZzugNyrGVIToOT2N3i07OkNmC3n2Ru2FOy5K5dbxtyZCb/QnhuAiQkHZxreLI+Fmbc/U3Hx2PLWIiksRy3q1HE1kqPuXnv8XNd5R3NwaGrw8mpoxGaP3i0D7mk9pRam6EPdnLb9UAfhE0brLs8PmVw1TvoYIpF8S5ijYmmykoY+Lit6vrLZ3R+Lgp9K337YmyL9/eEsubKv12DzVCmbyfe9FPSCv0E+DhH06mgxyPZ31vgdBomVNSsr6jsattDbrGrJk4qP6b4fOiqPgBaf/TqJsFucyEDUAeNUMekHu3KttxI8X6MQ2P/faq9yOrGTX1LiOI9Ew3b9e4QURbcEQD2U4n5SHvW8Eeaxis1DX1kELUNrTRO/HKMHDCuDdPnzKo8J9y1hFIojhIMuGT+QTEeQ8ynYaVuKRCd2qVVdFpP4ZvIAQePMPa1OiYjmQvmRO+URwCfphfe7zHwa+v2SZ8K0mgWyAIIA1zRg5Xu3zNY/Ktq83rVGVwinL1MH0BPz5OdFVBAV/vrmY=
+  - secure: WxMCQ9aFKZtK6qZOUvOLPZcECMlSami+jx7T4a8HQNHinaSzd6MJytzd/3cB/Gt5vuemC7susTGvEIK6uUzAxwv4cTUYvkHQ0+JVK5pNqYPknR5bGqEdyUpY2u3V9UCzMR+X5H3qBvcbjzC6DocNO/G14m/9ZZug4e1Xl8L40eJsuxbyT3koJiduTQNDjVomrzCdmLZJirEW+IVPE3oRSpKGnVZv8Mwzzf81H/AeOyOJdXT2Mf9X222DZ15chfuQRfVkvUshpzrI2WJEJSBP5sh57po0GtDwJ3/cpPg390p2iHbljM7PE6fSkKT1jL0gxp0FyrZ4c1K/eLWODgvFdI9wHSNaRevj2J84YWT2HqsDn6VJtD/HHqlDvGYiGvUoDcDnEpCH2SkwgTRfPP9GtUI3jO5tqXHcORoZ/YFdh3yQ4noCMY/FU7/laXTw9XBk1sqVZJdBE/Fx3Ra1UnGbP/FrQdcA4aw50APfZLJzycee5uIvwE61DUopJztChEFgnNVr7/Sx3kw9K2qywpQf6DWN7O6HACeYjKyjLOU8Ancm/85TCUQCy0g2KOAmcl5mB31xXKxHikhGQbAHrE8pq+Q1voy/Y7MUfro8QhyxVMc1eKGTiFJAckEXG/+eWAsB/REThCR50vFal5bGFihXcuvo6SP9D8MLGOb6q7i8LlI=
+  - secure: b0B/dIlDyezJ+MTyER9cfScEpoExY1A+5xd9oCRglqL2pqdFM3J0YaBVG4hnxoymBA8J6ZfIcm1yV6MeRj7GOzVFKhgsUgAd/Cm78FEQHzXttR+GNu1wkxginnNSQQRXKdKxJRT4NG3dGgzdomQ+K5cQxzVzXTZMIinp+DpBhnLoMZt+oSrM69E4WmS5A6KREe1QJnySWjXatdr30eAHLjtT3zfeYRExBOURAN8rfyfvXjM55IsKJ/kOyPt1wEbQ1GIPa3o40bVUMAExV3v1wm6lsqCIg0Bx4peyskrX7o0LBgAaztj3TCMd38+voouHm1qIZgh2X5KoBFqFmJDTFzMsFSrNVJlgImKSHenatvNYtz4+CaPxf01sYqJ1oRm7o9feQ5e8q0qa82wHYnDwrsVEhOjNVUSzlQKPuR6zU+XMgvNz07jm62HDmWBnMbaSyztzn3IBxdaeGdt3rRj7+o9UWilv/SMHY99DkBsMxrX/F1liqY6YyOH8T6JuxXzoGnlQf9NQKNzH6mJKdkxG9/pPxTK3EQRJVIoUU27eGr0zuTZoG53Qt+3N4KgGRSzFuu3OdtGzRARSq4b49cQijFX+i2BvBnt8UwY6OrBxHrv1a4XZeqdPqhRN+TfdQpCZi1t+039qTJIO44kTCHxzNpdn+vPVqGHfmgJ/EpTFhvs=
+before_install:
+- openssl aes-256-cbc -K $encrypted_071161ecb8aa_key -iv $encrypted_071161ecb8aa_iv
+  -in secrets.tar.enc -out secrets.tar -d
+- tar xvf secrets.tar
+- mv google_compute_engine /home/travis/.ssh/
+- chmod 0600 /home/travis/.ssh/google_compute_engine
