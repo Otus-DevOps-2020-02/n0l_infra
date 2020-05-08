@@ -1,0 +1,6 @@
+google_compute_engine
+google_compute_engine.pub
+secrets.tar
+credentials.json
+.travis.yml-old
+venv/

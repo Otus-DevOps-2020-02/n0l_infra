@@ -1,6 +1,6 @@
 terraform {
   # Версия terraform
-  required_version = " ~> 0.12.19"
+  required_version = "~> 0.12.19"
 }
 provider "google" {
   # Версия провайдера
@@ -16,7 +16,7 @@ module "app" {
   zone            = var.zone
   app_disk_image  = var.app_disk_image
   reddit_internal_ip = module.db.db_internal_ip
-  provision_enabled = true
+  provision_enabled = false
 }
 module "db" {
   source          = "../modules/db"
@@ -24,7 +24,7 @@ module "db" {
   private_key_path = var.private_key_path
   zone            = var.zone
   db_disk_image   = var.db_disk_image
-  provision_enabled = true
+  provision_enabled = false
 }
 module "vpc" {
   source = "../modules/vpc"

@@ -1,0 +1,45 @@
+# Добавим ключ репозитория для последующей работы с ним
+- name: Add apt key for Mongo DB
+  become: True
+  apt_key:
+    url: https://www.mongodb.org/static/pgp/server-4.2.asc
+    state: present
+  tags: install
+
+- name: Install gnupg package
+  become: True
+  apt:
+    name: gnupg
+  tags: install
+
+- name: Add apt key for Mongo DB again
+  become: True
+  apt_key:
+    url: https://www.mongodb.org/static/pgp/server-4.2.asc
+    state: present
+  tags: install
+
+# Подключаем репозиторий с пакетами mongodb
+- name: Add APT repository
+  become: True
+  apt_repository:
+    repo: deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.2 multiverse
+    state: present
+  tags: install
+
+# Выполним установку пакета
+- name: Install mongodb package
+  become: True
+  apt:
+    name: mongodb-org
+    state: present
+    update_cache: yes
+    allow_unauthenticated: yes
+  tags: install
+# Включаем сервис
+- name: Configure service supervisor
+  become: True
+  systemd:
+    name: mongod
+    enabled: yes
+  tags: install

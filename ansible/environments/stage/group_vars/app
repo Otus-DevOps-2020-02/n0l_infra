@@ -1,4 +1,4 @@
-db_host: 10.10.10.10
+#db_host: 10.10.10.10
 #db_host: "{{ db_ip }}"
 nginx_sites:
   default:

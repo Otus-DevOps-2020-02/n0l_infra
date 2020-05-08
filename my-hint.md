@@ -1,3 +1,121 @@
+# Molecule
+
+https://habr.com/ru/post/351974/
+
+Инструмент для тестирования ролей в Ansble. В версии 2.22 есть гораздо больше провайдеров для того чтобы развернуть окружение. В версии 3.03 их всего 3.
+
+Устанавливать её рекомедуется в виртуальное окружение
+
+#### Virtual Environments
+
+https://docs.python-guide.org/dev/virtualenvs/
+
+Очень полезная статья по настроке виртуального окружения virtualenv
+
+Для корректной работы нужно:
+
+- Использовать **--user** для установки пакетов локально для пользователя
+- Использовать pip3 для работы с python 3 версии
+- Добавить в переменную PATH="$PATH:/path/to/dir" путь к питону "python3 -m site --user-base"
+
+#### Команды
+
+```bash
+$ molecule --version
+$ molecule init scenario --scenario-name default -r db -d vagrant
+# Нужно добавлять scenario, если мы создаем тест для существующей роли
+# Или просто init для новой роли
+# -d vagrant - драйвер (с 3й версии их количество сильно порезали)
+$ molecule create создает виртуальные машины (выполняется в папке с ролью например ansible/roles/db)
+$ molecule destroy -f удалет VM
+$ molecule list посмотреть список созданных VM
+$ molecule login -h instance подключиться внутр машины и с именем ssh
+
+$ molecule converge Применим playbook.yml, в котором вызывается наша роль к
+созданному хосту
+$ molecule verify Прогнать тесты
+```
+
+
+
+#### тесты
+
+лежат тут: db/molecule/default/tests/test_default.py
+
+список модулей от testinfra https://testinfra.readthedocs.io/en/latest/modules.html
+
+
+
+# Vagrant
+
+Инструмент для автоматизации разработки:
+
+- Создание, настройка и удаление локальных окружений
+- Providers (VirtualBox, Hyper-V, VMware, Docker, …)
+- Provisioners (Ansible, Chef, Puppet, Salt, Shell, …)
+- Плагины
+
+##### Config
+
+Пример конфигурационного файла:
+
+```ini
+Vagrant.configure("2") do |config|
+
+  config.vm.provider :virtualbox do |v|
+    v.memory = 512
+  end
+
+  config.vm.define "dbserver" do |db|
+    db.vm.box = "ubuntu/xenial64"
+    db.vm.hostname = "dbserver"
+    db.vm.network :private_network, ip: "10.10.10.10"
+  end
+  
+  config.vm.define "appserver" do |app|
+    app.vm.box = "ubuntu/xenial64"
+    app.vm.hostname = "appserver"
+    app.vm.network :private_network, ip: "10.10.10.20"
+  end
+end
+```
+
+#### Команды
+
+```
+$ vagrant up # создать инфраструктуру
+$ vagrant box list # списока образов скачанных на локальную машину
+$ vagrant status # статус  VM
+$ vagrant ssh appserver # подключиться к VM
+$ vagrant provision dbserver # запуск провжинера на VM
+```
+
+#### Vagrant Cloud
+
+Хранилище образов
+
+https://app.vagrantup.com/boxes/search
+
+#### Провижинеры
+
+Vagrant поддерживает большое количество провижинеров, которые позволяют автоматизировать процесс конфигурации созданных VMs с использованием популярных инструментов управления конфигурацией и обычных скриптов на bash.
+
+https://www.vagrantup.com/docs/provisioning/
+
+Пример ansible provision
+
+```
+db.vm.provision "ansible" do |ansible|
+      ansible.playbook = "playbooks/site.yml"
+      ansible.groups = {
+      "db" => ["dbserver"],
+      "db:vars" => {"mongo_bind_ip" => "0.0.0.0"}
+      }
+end
+```
+
+
+
 # Ansible
 
 #### Установка

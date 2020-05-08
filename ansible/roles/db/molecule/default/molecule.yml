@@ -1,0 +1,21 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: gce
+lint:
+  name: yamllint
+platforms:
+  - name: instance-db-ex13-molecule-check
+    machine_type: f1-micro
+    zone: us-central1-f
+    tags: puma-server
+    image: ubuntu-1604-xenial-v20191024
+provisioner:
+  name: ansible
+  lint:
+    name: ansible-lint
+verifier:
+  name: testinfra
+  lint:
+    name: flake8
